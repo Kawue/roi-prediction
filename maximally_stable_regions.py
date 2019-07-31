@@ -66,7 +66,7 @@ def calc_nested_regions(img, delta, min_area, max_area):
                     counter += 1
 
         # Check if update is needed.
-        # There is no uopdate needed when the region area is outside of min/max area, which results in an empty update dict.
+        # There is no update needed when the region area is outside of min/max area, which results in an empty update dict.
         if update_dict:
             key_adjust = max(max(update_dict.keys()),max(nested_regions.keys())) + 1
             # Update
