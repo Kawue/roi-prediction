@@ -6,7 +6,7 @@ from maximally_stable_regions import calc_mser
 from skimage import img_as_ubyte
 from mini_mser import calc_mser as cmser
 import os
-from skimage.morphology import binary_closing, square, disk
+from skimage.morphology import binary_closing, square, disk, binary_opening
 
 class ROIpredictor:
     def __init__(self, aggregation_mode, sequence_min=3, delta=1, min_area=100, max_area=2000):
@@ -41,12 +41,12 @@ class ROIpredictor:
             if close:
                 closed_rois = []
                 for roi in rois:
-                    closed_rois.append(binary_closing(roi, selem=disk(3)))
-                    #closed_rois.append(binary_closing(roi, selem=square(3)))
+                    closed_rois.append(binary_closing(binary_opening(binary_closing(roi, selem=disk(3)), selem=square(3)), selem=square(3)))
                 self.data_dict[memb]["rois"] = np.array(closed_rois)
+                self.data_dict[memb]["mser"] = np.sum(np.array(closed_rois), axis=0)
             else:
                 self.data_dict[memb]["rois"] = rois
-            self.data_dict[memb]["mser"] = mser
+                self.data_dict[memb]["mser"] = mser
 
 
 
@@ -155,3 +155,6 @@ class ROIpredictor:
         mask[mask > 0] = 1
         return mask
     '''
+
+
+multi thresholding als rois und summe als mser als alternative auf agglomeriertem image
