@@ -1,9 +1,11 @@
 import numpy as np
 import matplotlib
-matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import os
 from skimage.measure import label, regionprops
+from sys import argv
+import pandas as pd
+import argparse
 
 class MsiImageWriter:
     def __init__(self, dframe, savepath, scaling="single", cmap=plt.cm.viridis, colorscale_boundary=(0,100)):
@@ -14,8 +16,11 @@ class MsiImageWriter:
             if not os.path.isdir(self.savepath):
                 os.makedirs(self.savepath)
 
-        if len(set(self.dframe.index.get_level_values("dataset"))) > 1:
-            raise ValueError("You provided a merged data set. Please provide a single data set.")
+        try:
+            if len(set(self.dframe.index.get_level_values("dataset"))) > 1:
+                raise ValueError("You provided a merged data set. Please provide a single data set.")
+        except:
+            print("No 'dataset' index encoded. A single data set is assumed.")
 
         self.grid_x = np.array(self.dframe.index.get_level_values("grid_x")).astype(int)
         self.grid_y = np.array(self.dframe.index.get_level_values("grid_y")).astype(int)
@@ -42,7 +47,7 @@ class MsiImageWriter:
                 self.colormap.set_clim(np.percentile(intens, self.colorscale_boundary))
             img = self._create_empty_img(True)
             img[(self.grid_y, self.grid_x)] = self.colormap.to_rgba(np.array(intens))
-            plt.imsave(os.path.join(self.savepath, str(np.round(mz, 3)) + ".png"), img)
+            plt.imsave(os.path.join(self.savepath, "images", str(np.round(mz, 3)) + ".png"), img)
 
     
     def write_msi_clusters(self, labels):
@@ -57,9 +62,6 @@ class MsiImageWriter:
                 img = self._create_empty_img(True)
                 img[(self.grid_y, self.grid_x)] = self.colormap.to_rgba(np.array(intens))
                 plt.imsave(os.path.join(clusterpath, str(np.round(mz, 3)) + ".png"), img)
-
-                
-                
 
 
     def write_dimvis_rgb(self, red_ch, green_ch, blue_ch, method_name):
@@ -120,13 +122,13 @@ class MsiImageWriter:
         lbl = label(img)
         props = regionprops(lbl)
         if len(props) != 1:
-            raise Warning("More than one measured region was found. Consider to apply matrix_remover first!")
-        #self.sample_box = props[np.argmax([prop.area for prop in props])].bbox
-        #sample_grid_x = self.dframe.index.get_level_values["grid_x"].isin(range(self.sample_box[1], self.sample_box[3]))
-        #sample_grid_y = self.dframe.index.get_level_values["grid_y"].isin(range(self.sample_box[0], self.sample_box[2]))
-        #self.dframe = self.dframe[sample_grid_x * sample_grid_y]
-        self.dframe.rename(lambda n: n-min(self.grid_x), level="grid_x")
-        self.dframe.rename(lambda n: n-min(self.grid_y), level="grid_y")
+            print("More than one measured region was found. Consider to apply matrix_remover first!")
+        self.dframe.rename(lambda n: (n-min(self.grid_x)).astype(int), level="grid_x", inplace=True)
+        self.dframe.rename(lambda n: (n-min(self.grid_y)).astype(int), level="grid_y", inplace=True)
+        self.grid_x = self.grid_x - min(self.grid_x)
+        self.grid_y = self.grid_y - min(self.grid_y)
+        self.height = self.grid_y.max() + 1
+        self.width = self.grid_x.max() + 1
 
 
     def matrix_remover(self):
@@ -135,25 +137,27 @@ class MsiImageWriter:
         lbl = label(img)
         props = regionprops(lbl)
         if len(props) > 2:
-            raise ValueError("More than two regions were found. Cannot proceed.")
+            print("More than two regions were found. The algorithm proceeds with the largest one.")
         if len(props) < 2:
-            raise Warning("Only one region were found. Either, matrix is not separated from pixel and cannot be removed or no matrix was measured.")
-        self.sample_box = props[np.argmax([prop.area for prop in props])].bbox
-        self.matrix_box = props[np.argmin([prop.area for prop in props])].bbox
-        sample_grid_x = self.dframe.index.get_level_values["grid_x"].isin(range(self.sample_box[1], self.sample_box[3]))
-        sample_grid_y = self.dframe.index.get_level_values["grid_y"].isin(range(self.sample_box[0], self.sample_box[2]))
-        matrix_grid_x = self.dframe.index.get_level_values["grid_x"].isin(range(self.matrix_box[1], self.matrix_box[3]))
-        matrix_grid_y = self.dframe.index.get_level_values["grid_y"].isin(range(self.matrix_box[0], self.matrix_box[2]))
-        self.matrix_field = self.dframe[matrix_grid_x * matrix_grid_y]
+            print("Only one region were found. Either, matrix is not separated from pixel and cannot be removed or no matrix was measured.")
+        
+        max_area_idx = np.argmax([prop.area for prop in props])
+        self.sample_box = props[max_area_idx].bbox
+        sample_grid_x = self.dframe.index.get_level_values("grid_x").isin(range(self.sample_box[1], self.sample_box[3]))
+        sample_grid_y = self.dframe.index.get_level_values("grid_y").isin(range(self.sample_box[0], self.sample_box[2]))
         self.dframe = self.dframe[sample_grid_x * sample_grid_y]
-        self.dframe.rename(lambda n: n-min(self.grid_x), level="grid_x")
-        self.dframe.rename(lambda n: n-min(self.grid_y), level="grid_y")
-
-
-
+        self.grid_x = self.grid_x[sample_grid_x * sample_grid_y].astype(int)
+        self.grid_y = self.grid_y[sample_grid_x * sample_grid_y].astype(int)
+        
     def _create_empty_img(self, rgba):
         if rgba:
             return np.zeros((self.height + 1, self.width + 1, 4))
         else:
             return np.zeros((self.height + 1, self.width + 1))
-        
+
+
+
+    # DataFrame adjustemnt funcitons to be on par with the new images
+    def write_dframe(self, savepath):
+        print(os.path.basename(savepath).split(".")[0])
+        self.dframe.to_hdf(savepath, key=os.path.basename(savepath).split(".")[0], complib="blosc", complevel=9)
