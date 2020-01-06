@@ -58,6 +58,3 @@ def calc_ac(img, method, init_img=None):
         raise ValueError("Method needs to be 'cv', 'mcv', 'mgac', 'contours_low' or 'contours_high'.")
     
     return region
-
-
-    

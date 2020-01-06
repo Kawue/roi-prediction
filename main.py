@@ -19,6 +19,7 @@ parser.add_argument("--embedding_nr", default=None, type=int,  nargs="+", requir
 parser.add_argument("--components_method", default=None, type=str, required="component_pred" in sys.argv, help="Method for the dimension reduction components region prediction..")
 parser.add_argument("--neighbors", default=None, type=float, required="knn" in sys.argv, help="Number of neighbors for the kNN graph. Zero will result in no impact.")
 parser.add_argument("--radius", default=None, type=float, required="knn" in sys.argv, help="Radius for the rNN graph. Zero will result in no impact.")
+parser.add_argument("--expansion_factor", default=None, type=float, required=False, help="Factor for the exponential increase of distances between data points in the calculated embedding.")
 
 parser.add_argument("--nr_classes", type=int, default=False, required="mt" in sys.argv, help="Number of classes for multi-otsus thresholding.")
 parser.add_argument("--classes", type=int, default=False, nargs="+", required="mt" in sys.argv, help="List of thresholds for multi thresholding.")
@@ -33,11 +34,19 @@ parser.add_argument("-c", "--contour", type=str, required=True, choices=["cv", "
 parser.add_argument("--fill_holes", required=False, action='store_true', help="Applies hole filling method.")
 
 parser.add_argument("--clustering", required=False, type=str, help="Path to a saved clustering (.npy or .csv) or choose one of the pre defined cluster methods.")
+parser.add_argument("--save_clustering", default=None, required=False, type=str, help="Filename or path/filename to save a cluster result if a pre defined cluster method was used. Must contain .npy or .csv.")
 parser.add_argument("--delimiter", default=None, required=False, type=str, help="Type of .csv delimiter.")
 parser.add_argument("--cluster_labels", default=-1, type=int,  nargs="+", required="clustering", help="Choose the labels of the preceding clustering that should be considered. To select all labels use -1.")
+parser.add_argument("--show_cluster_labels", required=False, action='store_true', help="Shows the cluster labels and quits the script. We advice to use --save_clustering if a pre defined cluster method is used!")
 parser.add_argument("--aggregation_mode", default=None, type=str, choices=['mean', 'median', 'sum', 'prod', 'max', 'min'], required="clustering", help="Method to aggregate clustered image stacks. Choose from 'mean', 'median', 'sum', 'prod', 'max' or 'min'.")
 
 args=parser.parse_args()
+
+
+
+n_clusters = 6
+method = "AgglomerativeClustering"
+
 
 if "mt" in sys.argv:
     if not args.nrClasses and not args.classes:
@@ -61,11 +70,7 @@ else:
 
 dframe = pd.read_hdf(args.readpath)
 roi_pred = ROIpredictor(dframe)
-roi_pred.fit_clustering(memberships=labels, normalize=True)
 
-if args.show_cluster_labels:
-    print("The selected Cluster method applied the following labels: " + str(roi_pred.memberships))
-    exit(0)
 
 kwargs = {}
 
@@ -98,8 +103,8 @@ if args.neighbors is not None:
 if args.radius is not None:
     kwargs["radius"] = args.radius
 
-#if args.expansion_factor is not None:
-#    kwargs["expansion_factor"] = args.expansion_factor
+if args.expansion_factor is not None:
+    kwargs["expansion_factor"] = args.expansion_factor
 
 if args.sequence_min is not None:
     kwargs["sequence_min"] = args.sequence_min
@@ -121,8 +126,17 @@ if args.clustering is not None:
     images = []
 
     if args.clustering in [""]:
-        cluster_labels = cluster_routine()
+        cluster_labels = cluster_routine(dframe.values, n_clusters, method)
+        if args.save_clustering is not None:
+            if ".npy" in args.save_clustering:
+                np.save(args.save_clustering, cluster_labels)
+            elif ".csv" in args.save_clustering:
+                np.savetxt(args.save_clustering, cluster_labels, delimiter=",")
+            else:
+                raise ValueError("File must be .npy or .csv.")
     else:
+        if args.save_clustering is not None:
+            print("Stored clustering was loaded from file. --save_clustering will be ignored!")
         if ".npy" in args.clustering:
             cluster_labels = np.load(args.clustering)
             if cluster_labels.ndim != 1:
@@ -147,6 +161,11 @@ if args.clustering is not None:
             raise ValueError("Labels in .csv file must be encoded in one line.")
         else:
             cluster_labels = cluster_labels[0]
+
+    roi_pred.fit_clustering(memberships=cluster_labels, normalize=True)
+    if args.show_cluster_labels:
+        print("The selected Cluster method applied the following labels: " + str(roi_pred.memberships))
+        exit(0)
 
     if cluster_labels:
         if cluster_labels[0] == -1:
