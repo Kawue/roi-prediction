@@ -1,10 +1,11 @@
 import numpy as np
 import pandas as pd
 from skimage import img_as_ubyte
+from skimage import filters as skfilters
 from sklearn.neighbors import NearestNeighbors
 from scipy.sparse.csgraph import connected_components
 from msi_dimension_reducer import PCA, NMF, LDA, ICA, UMAP, TSNE
-from utils import create_empty_img, create_img
+from utils import create_empty_img, create_img, normalization
 from active_contours import calc_ac
 from interactive_dimreduce_regions import InteractiveDimensionReductionRegionsSelector
 
@@ -56,19 +57,29 @@ class DimensionReductionRegions():
         return img
 
 
-    def embedding_regions(self, embedding_nr):
-        embedding = self.embedding
-        img = create_img(self.embedding[:,embedding_nr], self.gy, self.gx, self.height, self.width)
-        region_sum, regions = calc_ac(img, "cv")
-        plt.figure()
-        plt.imshow(img)
-        plt.figure()
-        plt.imshow(region_sum)
-        plt.show()
-        return None, None
+    def embedding_regions(self, method, embedding_nr):
+        regions_dict={}
+        for nr in embedding_nr:
+            embedding_img = self.embedding_images(embedding_nr[nr])
+            embedding_uint = img_as_ubyte(normalization(embedding_img))
+            embedding_uint_bin = (embedding_uint > skfilters.threshold_otsu(embedding_uint)).astype(int)
+            if method == "cv":
+                region = calc_ac(embedding_uint_bin, "cv", init_img=embedding_img)
+            elif method == "mcv":
+                region = calc_ac(embedding_uint_bin, "mcv", init_img=embedding_img)
+            elif method == "mgac":
+                region = calc_ac(embedding_uint_bin, "mgac", init_img=embedding_img)
+            elif method == "contours_low":
+                region = calc_ac(embedding_img, "contours_low", init_img=embedding_uint_bin)
+            elif method == "contours_high":
+                region = calc_ac(embedding_img, "contours_high", init_img=embedding_uint_bin)
+            regions_dict = {nr: region}
+        region_sum = np.sum([img for key, img in regions_dict.items()], axis=0)
+        return region_sum, regions_dict
 
     def cc_regions(self, selected_components=None, n_neighbors=None, radius=None, expansion_factor=None):
         embedding = self.embedding
+        '''
         if embedding.shape[1] == 2:
             selected_components = [0,1]
         elif selected_components is not None:
@@ -78,6 +89,7 @@ class DimensionReductionRegions():
                 raise ValueError("selected_components parameter must be od type list.")
         else:
             raise ValueError("'DimensionReductionRegions' was initialized with more than two components. Provide selected_components as list.")
+        '''
         embedding = embedding[:, selected_components]
 
         if n_neighbors is None:
@@ -94,11 +106,11 @@ class DimensionReductionRegions():
 
         knn = nn.kneighbors_graph()
         knn_cc_labels = connected_components(knn, directed=False)[1]
-        knn_cc = [tuple(np.where(knn_cc_labels==lbl)[0]) for lbl in range(max(knn_cc)+1)]
+        knn_cc = [tuple(np.where(knn_cc_labels==lbl)[0]) for lbl in range(max(knn_cc_labels)+1)]
 
         rnn = nn.radius_neighbors_graph()
         rnn_cc_labels = connected_components(rnn, directed=False)
-        rnn_cc = [tuple(np.where(rnn_cc_labels==lbl)[0]) for lbl in range(max(rnn_cc)+1)]
+        rnn_cc = [tuple(np.where(rnn_cc_labels==lbl)[0]) for lbl in range(max(rnn_cc_labels)+1)]
 
         regions_idx = list(set(knn_cc + rnn_cc))
 
@@ -108,13 +120,17 @@ class DimensionReductionRegions():
             img[(self.gy[idx], self.gx[idx])] = 1
             regions.append(img)
         regions = np.array(regions)
+        regions_dict = {}
+        for idx, region in enumerate(regions):
+                regions_dict[idx] = region
         region_sum = np.sum(regions, axis=0)
 
-        return region_sum, regions
+        return region_sum, regions_dict
 
 
     def interactive_regions(self, selected_components=None):
         embedding = self.embedding
+        '''
         if embedding.shape[1] == 2:
             selected_components = [0,1]
         elif selected_components is not None:
@@ -124,6 +140,7 @@ class DimensionReductionRegions():
                 raise ValueError("selected_components parameter must be od type list.")
         else:
             raise ValueError("'DimensionReductionRegions' was initialized with more than two components. Provide selected_components as list.")
+        '''
         embedding = embedding[:, selected_components]
 
         if isinstance(self.data, pd.DataFrame):
@@ -135,6 +152,9 @@ class DimensionReductionRegions():
         plot.plot()
 
         regions = np.array(plot.return_rois())
+        regions_dict = {}
+        for idx, region in enumerate(regions):
+                regions_dict[idx] = region
         region_sum = np.sum(regions, axis=0)
 
-        return region_sum, regions
+        return region_sum, regions_dict

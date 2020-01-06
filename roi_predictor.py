@@ -23,7 +23,9 @@ class ROIpredictor:
         self.width = np.amax(self.gx)
         self.height = np.amax(self.gy)
         self.binary_image = self._create_img(1) #"Sample/Measured Area"
+        self.memberships = None
 
+    # Fit a given clustering
     def fit_clustering(self, memberships, normalize):
         self.memberships = memberships
         self.data_dict = AutoVivificationDict()
@@ -43,6 +45,7 @@ class ROIpredictor:
             self.data_dict[memb]["grpimg"]["min"] = self.aggregation_img(grpimgs, 6)
 
 
+    # Fill wholes in a RoI image
     def fill_holes(self, roi, method):
         if method == "morphology":
             return binary_closing(binary_opening(binary_closing(roi, selem=disk(3)), selem=square(3)), selem=square(3))
@@ -50,15 +53,17 @@ class ROIpredictor:
             return calc_ac(roi, method)
         elif method == "mcv":
             return calc_ac(roi, method)
-        elif method == "ac":
-            return calc_ac(roi, method)
         elif method == "mgac":
             return calc_ac(roi, method)
+        elif method == "contours_low":
+            return calc_ac(roi, method)
+        elif method == "contours_high":
+            return calc_ac(roi, method)
         else:
-            raise ValueError("Function 'fill_holes()' takes only 'morphology','cv','mcv','ac' or 'mgac' as method parameter.")
+            raise ValueError("Function 'fill_holes()' takes only 'morphology', 'cv', 'mcv', 'mgac', 'contours_low' or 'contours_high' as method parameter.")
 
 
-    
+    # Aggregate images of a clustered image stack
     def aggregation_img(self, grp, aggregation_mode, normalization=True):
         if aggregation_mode == 1:
             img = np.mean(grp, axis=0)
@@ -79,61 +84,91 @@ class ROIpredictor:
         return img
 
     
+    # Call a RoI prediction method
     def predict_rois(self, method, kwargs):
         if method == "dr":
-            region_sum, regions = self._dr_routine(**kwargs)
+            results_dict = self._dr_routine(**kwargs)
         elif method == 'mt':
-            region_sum, regions = self._mt_routine(**kwargs)
+            results_dict = self._mt_routine(**kwargs)
         elif method == 'mser':
-            region_sum, regions = self._mser_routine(**kwargs)
+            results_dict = self._mser_routine(**kwargs)
         else:
             raise ValueError("Available methods for predict_rois() are 'dr' for dimension reduction, 'mt' for multi threshold or 'mser' for maximally stable extendable regions.")
-        
-        return region_sum, regions
-        
+        return results_dict
 
-    
-    def _mt_routine(self, img=None, thresholds=None):
-        if img is None or thresholds is None:
+
+
+
+
+########## Prediction Routines ##########
+  
+    def _mt_routine(self, images=None, thresholds=None):
+        if images is None or thresholds is None:
             raise ValueError("For multi threshold roi prediction an image and a list of thresholds or number of classes must be provided.")
-        img = img_as_ubyte(img)
-        region_sum, regions = calc_mt_regions(img, thresholds)
-        return region_sum, regions
+        results_dict = {}
+        for idx, img in enumerate(images):
+            img = img_as_ubyte(img)
+            region_sum, regions = calc_mt_regions(img, thresholds)
+            regions_dict = {}
+            for idx, region in enumerate(regions):
+                    regions_dict[idx] = region
+            results_dict[idx] = (region_sum, regions_dict)
+        return results_dict
 
 
-    def _dr_routine(self, pred_method, dr_method=None, components=None, embedding_nr=None, n_neighbors=None, radius=None, expansion_factor=None):
+    def _dr_routine(self, pred_method, dr_method=None, components=None, embedding_nr=None, components_method=None, n_neighbors=None, radius=None, expansion_factor=None):
+        results_dict = {}
         if dr_method is None:
             raise ValueError("For dimension reduction roi prediction the dimension reduction method must be provided.")
         drr = DimensionReductionRegions(self.dframe, dr_method=dr_method, components=components)
-        if pred_method == "components":
-            if embedding_nr is None:
-                raise ValueError("For the 'components' submethod in dimension reduction roi prediction 'embedding_nr' must be provided.")
-            region_sum, regions = drr.embedding_regions(embedding_nr=embedding_nr)
-        elif pred_method == "knn":
+        if pred_method == "component_pred":
+            if embedding_nr is None or components_method is None:
+                raise ValueError("For the 'components' submethod in dimension reduction roi prediction at lest one 'embedding_nr' and a method ('cv', 'mcv', 'mgac', 'contours_low' or 'contours_high') must be provided.")
+            region_sum, regions = drr.embedding_regions(method=components_method, embedding_nr=embedding_nr)
+        elif pred_method == "knn_pred":
             if components is None or n_neighbors is None or radius is None:
                 raise ValueError("For the 'knn' submethod in dimension reduction roi prediction 'components', 'n_neighbors' and 'radius' must be provided.")
-            region_sum, regions = drr.cc_regions(selected_components=components, n_neighbors=n_neighbors, radius=radius, expansion_factor=expansion_factor)
-        elif pred_method == "interactive":
+            if len(embedding_nr) != 2:
+                raise ValueError("embedding_nr must provide exact two components (two integers) to use cc_regions().")
+            region_sum, regions = drr.cc_regions(selected_components=embedding_nr, n_neighbors=n_neighbors, radius=radius, expansion_factor=expansion_factor)
+        elif pred_method == "interactive_pred":
             if components is None:
                 raise ValueError("For the 'interactive' submethod in dimension reduction roi prediction 'components' must be provided.")
-            region_sum, regions = drr.interactive_regions(selected_components=components)
-        return region_sum, regions
+            if len(embedding_nr) != 2:
+                raise ValueError("embedding_nr must provide exact two components (two integers) to use interactive_regions().")
+            region_sum, regions = drr.interactive_regions(selected_components=embedding_nr)
+        else:
+            return drr
+        results_dict[0] = (region_sum, regions)
+        return results_dict
 
     
-    def _mser_routine(self, img, sequence_min, delta, min_area, max_area):
-        if img is None or sequence_min is None or delta is None or min_area is None or max_area is None:
+    def _mser_routine(self, images, mser_method, sequence_min, delta, min_area, max_area):
+        if images is None or sequence_min is None or delta is None or min_area is None or max_area is None:
             raise ValueError("For multi threshold roi prediction an image, 'sequence_min', 'delta', 'min_area' and 'max_area' must be provided.")
-        img = img_as_ubyte(img)
-        # Prediction of rois based on Maximally Stable Extended Regions, REMEMBER: There ist still an extension, important?
-        region_sum, regions = calc_mser(img, sequence_min=sequence_min, delta=delta, min_area=min_area, max_area=max_area, all_maps=True)
-        return region_sum, regions
+        results_dict = {}
+        for img in images:
+            img = img_as_ubyte(img)
+            # Prediction of rois based on Maximally Stable Extended Regions, REMEMBER: There ist still an extension, important?
+            region_sum, regions = calc_mser(img, sequence_min=sequence_min, delta=delta, min_area=min_area, max_area=max_area, all_maps=True)
+            regions_dict = {}
+            if mser_method == "level":
+                for lvl in range(0, np.amax(region_sum)):
+                    img = self._create_empty_img(False)
+                    img[np.where(region_sum > lvl)] = 1
+                    regions_dict[lvl] = img
+            elif mser_method == "all":
+                for idx, region in enumerate(regions):
+                    regions_dict[idx] = region
+            else:
+                raise ValueError("mser_method must be 'level' or 'all'.")
+            results_dict[idx] = (region_sum, regions_dict)
+        return results_dict
 
 
 
 
 
-
-    
 ########## Utility Functions ##########
 
     # https://stats.stackexchange.com/questions/281162/scale-a-number-between-a-range
@@ -148,57 +183,20 @@ class ROIpredictor:
     
 
 
+
+
 ########## Getters ##########
-
-    def get_rois(self):
-        return {memb: self.data_dict[memb]["rois"] for memb in self.data_dict}
-
-    def get_msers(self):
-        return {memb: self.data_dict[memb]["mser"] for memb in self.data_dict}
-
-    def get_aggregation_images(self):
-        return {memb: self.data_dict[memb]["grpimg"] for memb in self.data_dict}
+    def get_aggregation_images(self, method):
+        if self.memberships is None:
+            raise ValueError("fit_clustering() was not called.")
+        return {memb: self.data_dict[memb]["grpimg"][method] for memb in self.data_dict}
 
     def get_image_groups(self):
+        if self.memberships is None:
+            raise ValueError("fit_clustering() was not called.")
         return {memb: self.data_dict[memb]["grpimgs"] for memb in self.data_dict}
 
     def get_group_dframe(self):
+        if self.memberships is None:
+            raise ValueError("fit_clustering() was not called.")
         return {memb: self.data_dict[memb]["grpframe"] for memb in self.data_dict}
-
-    # Return a list of (x,y) tuples for each roi
-    def get_index(self, roi):
-        sample = roi[(self.gy, self.gx)]
-        roi_gx = self.gx[np.where(sample > 0)[0]]
-        roi_gy = self.gy[np.where(sample > 0)[0]]
-        roi_tuples = np.array(list(zip(roi_gy, roi_gx)))
-        return roi_gx, roi_gy
-
-
-
-    # Plot each roi in a separate image. Sample area in background and roi area in foreground
-    def plot_rois(self, grp_idx, mser, savepath):
-        if type(grp_idx) == int:
-            grp_idx = [grp_idx]
-        elif grp_idx is None:
-            grp_idx = list(self.data_dict.keys)
-        else:
-            if type(grp_idx) != list:
-                raise ValueError("Wrong type for grp_idx!")
-        
-        for idx in grp_idx:
-            title = "Group %i "%(idx)
-            plt.figure()
-            plt.title(title + "MSER")
-            #plt.imshow(self.data_dict[idx]["mser"])
-            if savepath:
-                clusterpath = os.path.join(savepath, "C%i"%idx)
-                if not os.path.isdir(clusterpath):
-                    os.makedirs(clusterpath)
-                plt.imsave("C%i-MSER"%idx, self.data_dict[idx]["mser"])
-            for i, roi in enumerate(self.data_dict[idx]["rois"]):
-                plt.figure()
-                plt.title(title + "ROI %i"%(i))
-                #plt.imshow(self.binary_mask + roi)
-                if savepath:
-                    plt.imsave("C%i-ROI%i"%(idx,i), self.binary_mask + roi)
-            plt.show()
