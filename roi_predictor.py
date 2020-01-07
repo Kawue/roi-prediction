@@ -46,21 +46,27 @@ class ROIpredictor:
 
 
     # Fill wholes in a RoI image
-    def fill_holes(self, roi, method):
-        if method == "morphology":
-            return binary_closing(binary_opening(binary_closing(roi, selem=disk(3)), selem=square(3)), selem=square(3))
-        elif method == "cv":
-            return calc_ac(roi, method)
-        elif method == "mcv":
-            return calc_ac(roi, method)
-        elif method == "mgac":
-            return calc_ac(roi, method)
-        elif method == "contours_low":
-            return calc_ac(roi, method)
-        elif method == "contours_high":
-            return calc_ac(roi, method)
-        else:
-            raise ValueError("Function 'fill_holes()' takes only 'morphology', 'cv', 'mcv', 'mgac', 'contours_low' or 'contours_high' as method parameter.")
+    def fill_holes(self, results_dict, method):
+        for resultskey, result_dict in results_dict.items():
+            for regionkey, region in result_dict["regions_dict"].items():
+                if method == "morphology":
+                    filledregion = binary_closing(binary_opening(binary_closing(region, selem=disk(3)), selem=square(3)), selem=square(3))
+                elif method == "cv":
+                    filledregion = calc_ac(region, method)
+                elif method == "mcv":
+                    filledregion = calc_ac(region, method)
+                elif method == "mgac":
+                    filledregion = calc_ac(region, method)
+                elif method == "contours_low":
+                    filledregion = calc_ac(region, method)
+                elif method == "contours_high":
+                    filledregion = calc_ac(region, method)
+                else:
+                    raise ValueError("Function 'fill_holes()' takes only 'morphology', 'cv', 'mcv', 'mgac', 'contours_low' or 'contours_high' as method parameter.")
+                results_dict[resultskey]["regions_dict"][regionkey] = filledregion
+            region_sum = np.sum([region for key, region in results_dict[resultskey]["regions_dict"].items()], axis=0)
+            results_dict[resultskey] = {"region_sum": region_sum, "regions_dict": result_dict["regions_dict"]}
+        return results_dict
 
 
     # Aggregate images of a clustered image stack
@@ -112,7 +118,7 @@ class ROIpredictor:
             regions_dict = {}
             for idx, region in enumerate(regions):
                     regions_dict[idx] = region
-            results_dict[idx] = (region_sum, regions_dict)
+            results_dict[idx] = {"region_sum": region_sum, "regions_dict": regions_dict}
         return results_dict
 
 
@@ -137,9 +143,11 @@ class ROIpredictor:
             if len(embedding_nr) != 2:
                 raise ValueError("embedding_nr must provide exact two components (two integers) to use interactive_regions().")
             region_sum, regions = drr.interactive_regions(selected_components=embedding_nr)
-        else:
+        elif pred_method == "return_drr":
             return drr
-        results_dict[0] = (region_sum, regions)
+        else:
+            raise ValueError("Error in _dr_routine().")
+        results_dict[0] = {"region_sum": region_sum, "regions_dict": regions}
         return results_dict
 
     
@@ -147,7 +155,7 @@ class ROIpredictor:
         if images is None or sequence_min is None or delta is None or min_area is None or max_area is None:
             raise ValueError("For multi threshold roi prediction an image, 'sequence_min', 'delta', 'min_area' and 'max_area' must be provided.")
         results_dict = {}
-        for img in images:
+        for idx, img in enumerate(images):
             img = img_as_ubyte(img)
             # Prediction of rois based on Maximally Stable Extended Regions, REMEMBER: There ist still an extension, important?
             region_sum, regions = calc_mser(img, sequence_min=sequence_min, delta=delta, min_area=min_area, max_area=max_area, all_maps=True)
@@ -158,11 +166,11 @@ class ROIpredictor:
                     img[np.where(region_sum > lvl)] = 1
                     regions_dict[lvl] = img
             elif mser_method == "all":
-                for idx, region in enumerate(regions):
-                    regions_dict[idx] = region
+                for i, region in enumerate(regions):
+                    regions_dict[i] = region
             else:
                 raise ValueError("mser_method must be 'level' or 'all'.")
-            results_dict[idx] = (region_sum, regions_dict)
+            results_dict[idx] = {"region_sum": region_sum, "regions_dict": regions_dict}
         return results_dict
 
 

@@ -15,20 +15,16 @@ def calc_nested_regions(img, delta, min_area, max_area):
     img = img.copy()
 
     delta = delta
-    if isinstance(min_area, int):
-        min_area = min_area
-    elif isinstance(min_area, float):
+
+    if 0 < min_area < 1:
         min_area = int(img.size * min_area)
     else:
-        raise ValueError("min_area needs to be of type int or float")
+        min_area = min_area
 
-    if isinstance(max_area, int):
-        max_area = max_area
-    elif isinstance(max_area, float):
+    if 0 < max_area <= 1:
         max_area = int(img.size * max_area)
     else:
-        raise ValueError("min_area needs to be of type int or float")
-
+        max_area = max_area
 
     img_dict = {}
     nested_regions = { -np.inf: [np.zeros(img.shape)] }
@@ -121,14 +117,7 @@ def calc_mser(img, sequence_min, delta, min_area, max_area, all_maps=False):
     for key, value in stability_dict.items():
         idx = np.argmin(value)
         stable_regions.append(nested_regions[key][idx])
-        '''
-        plt.figure()
-        plt.title(key)
-        plt.imshow(nested_regions[key][idx])
-        plt.figure()
-        plt.title(key)
-        plt.plot(value)
-        '''
+
     stable_regions = np.array(stable_regions)
     #TODO: How to solve dublicated stable regions, i.e. when two or more series have their stable image before they divided
     if len(stable_regions) > 0:        
@@ -138,131 +127,12 @@ def calc_mser(img, sequence_min, delta, min_area, max_area, all_maps=False):
             return mser_img, stable_regions
         else:
             return mser_img
-        #plt.figure()
-        #plt.imshow(mser_img[0])
-        #plt.show()
     else:
         print("ATTENTION! There are no stable regions in this image. There ist most likely not enough color or intensity information!")
         print("")
         return np.zeros(img.shape), []
 
 
-'''
-img = imread("../data/barley101-images/104.107.png", mode="L")
-#img = imread("../data/mser_test2.png", mode="L")
-#img2 = imread("../data/mser_test.png", mode="L")
-#img3 = imread("../data/cutecatsmall.png", mode="L")
-
-calc_mser(img, 3, 1, 20, 4000)
-
-#extension paper nochmal angucken, ob alles drin ist (Extended MSER Detection)
-'''
-
-
-
-
-
-
-
-
-
-
-
-'''
-    for r in nested_regions[103]:
-        plt.figure()
-        plt.imshow(r)
-    plt.show()
-'''
-
-'''
-    plt.figure()
-    plt.imshow(nested_regions[103][-1])
-    plt.figure()
-    plt.imshow(nested_regions[103][-2])
-    plt.figure()
-    plt.imshow(nested_regions[103][-3])
-    plt.figure()
-    plt.imshow(nested_regions[103][-4])
-    plt.figure()
-    plt.imshow(nested_regions[103][-5])
-
-
-    plt.figure()
-    plt.imshow(nested_regions[104][-1])
-    plt.figure()
-    plt.imshow(nested_regions[104][-2])
-    plt.figure()
-    plt.imshow(nested_regions[104][-3])
-    plt.figure()
-    plt.imshow(nested_regions[104][-4])
-    plt.figure()
-    plt.imshow(nested_regions[104][-5])
-'''    
-    #plt.show()        
-
-'''
-    print(list(update_dict.keys()))
-
-    for key in nested_regions:
-        plt.figure()
-        plt.title("Key: " + str(key))
-        plt.imshow(nested_regions[key][-1])
-
-    for key in nested_regions:
-        plt.figure()
-        plt.title("Key: " + str(key))
-        plt.imshow(nested_regions[key][-100])
-
-    for key in nested_regions:
-        plt.figure()
-        plt.title("Key: " + str(key))
-        plt.imshow(nested_regions[key][-150])
-
-    for key in nested_regions:
-        plt.figure()
-        plt.title("Key: " + str(key))
-        plt.imshow(nested_regions[key][-200])
-
-    for key in nested_regions:
-        plt.figure()
-        plt.title("Key: " + str(key))
-        plt.imshow(nested_regions[key][-254])
-        
-    plt.show()
-    '''
-
-
-'''
-    print("---------")
-    print(len(img_dict))
-    print("#######")
-    print(len(nested_regions))
-    print(list(nested_regions.keys()))
-    for key in nested_regions:
-        print("********")
-        print(key)
-        print(len(nested_regions[key]))
-        
-        for i in nested_regions[key]:
-            plt.figure()
-            plt.title("key " + str(key))
-            plt.imshow(i)
-            break
-    plt.show()
-'''    
-        
-        
-'''    
-        for region in regionprops(labels):
-            #print(region.area)
-            #print(region.coords)
-            t = np.zeros(img.shape)
-            t[region.coords[:,0], region.coords[:,1]] = 1
-            #plt.figure()
-            #plt.imshow(t)
-            #plt.show()
-'''
 
 '''
 def maximally_stable_extremal_regions(img, sample_mask):

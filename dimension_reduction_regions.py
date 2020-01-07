@@ -22,10 +22,10 @@ class DimensionReductionRegions():
             "umap": UMAP
         }
     def __init__(self, data, dr_method, components, y_pixels=None, x_pixels=None):
-        if type(components) == int:
-            self.nr_components = components
-            self.selected_components = list(range(components))
-        elif type(components) == list:
+        if len(components) == 1:
+            self.nr_components = components[0]
+            self.selected_components = list(range(self.nr_components))
+        elif len(components) > 1:
             self.nr_components = max(components) + 1
             self.selected_components = components
         else:
@@ -73,7 +73,7 @@ class DimensionReductionRegions():
                 region = calc_ac(embedding_img, "contours_low", init_img=embedding_uint_bin)
             elif method == "contours_high":
                 region = calc_ac(embedding_img, "contours_high", init_img=embedding_uint_bin)
-            regions_dict = {nr: region}
+            regions_dict[nr] = region
         region_sum = np.sum([img for key, img in regions_dict.items()], axis=0)
         return region_sum, regions_dict
 
