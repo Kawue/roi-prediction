@@ -21,16 +21,9 @@ class DimensionReductionRegions():
             "tsne": TSNE,
             "umap": UMAP
         }
-    def __init__(self, data, dr_method, components, y_pixels=None, x_pixels=None):
-        if len(components) == 1:
-            self.nr_components = components[0]
-            self.selected_components = list(range(self.nr_components))
-        elif len(components) > 1:
-            self.nr_components = max(components) + 1
-            self.selected_components = components
-        else:
-            raise ValueError("components parameter must be of type 'int' or 'list'.")
-        
+    def __init__(self, data, dr_method, components, embedding_nr, y_pixels=None, x_pixels=None):
+        self.nr_components = components
+        self.selected_components = embedding_nr
         self.data = data
 
         if isinstance(data, pd.DataFrame):
@@ -90,7 +83,7 @@ class DimensionReductionRegions():
         else:
             raise ValueError("'DimensionReductionRegions' was initialized with more than two components. Provide selected_components as list.")
         '''
-        embedding = embedding[:, selected_components]
+        #embedding = embedding[:, selected_components]
 
         if n_neighbors is None:
             n_neighbors = 0
@@ -105,24 +98,30 @@ class DimensionReductionRegions():
         nn.fit(embedding)
 
         knn = nn.kneighbors_graph()
-        knn_cc_labels = connected_components(knn, directed=False)[1]
+        knn_nr_components, knn_cc_labels = connected_components(knn, directed=False)
+        print("Number of knn components: %i"%(knn_nr_components))
         knn_cc = [tuple(np.where(knn_cc_labels==lbl)[0]) for lbl in range(max(knn_cc_labels)+1)]
 
         rnn = nn.radius_neighbors_graph()
-        rnn_cc_labels = connected_components(rnn, directed=False)
+        rnn_nr_components, rnn_cc_labels = connected_components(rnn, directed=False)
+        print("Number of rnn components: %i"%(rnn_nr_components))
         rnn_cc = [tuple(np.where(rnn_cc_labels==lbl)[0]) for lbl in range(max(rnn_cc_labels)+1)]
 
         regions_idx = list(set(knn_cc + rnn_cc))
 
+        print("Total number of components: %i"%(len(regions_idx)))
+
         regions = []
+        
         for idx in regions_idx:
+            idx = list(idx)
             img = create_empty_img(self.height, self.width, False)
             img[(self.gy[idx], self.gx[idx])] = 1
             regions.append(img)
         regions = np.array(regions)
         regions_dict = {}
         for idx, region in enumerate(regions):
-                regions_dict[idx] = region
+            regions_dict[idx] = region
         region_sum = np.sum(regions, axis=0)
 
         return region_sum, regions_dict

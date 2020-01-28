@@ -116,9 +116,11 @@ class ROIpredictor:
             img = img_as_ubyte(img)
             region_sum, regions = calc_mt_regions(img, thresholds)
             regions_dict = {}
-            for idx, region in enumerate(regions):
-                    regions_dict[idx] = region
+            for i, region in enumerate(regions):
+                regions_dict[i] = region
             results_dict[idx] = {"region_sum": region_sum, "regions_dict": regions_dict}
+        print(results_dict)
+        print(results_dict.keys())
         return results_dict
 
 
@@ -126,7 +128,7 @@ class ROIpredictor:
         results_dict = {}
         if dr_method is None:
             raise ValueError("For dimension reduction roi prediction the dimension reduction method must be provided.")
-        drr = DimensionReductionRegions(self.dframe, dr_method=dr_method, components=components)
+        drr = DimensionReductionRegions(self.dframe, dr_method=dr_method, components=components, embedding_nr=embedding_nr)
         if pred_method == "component_pred":
             if embedding_nr is None or components_method is None:
                 raise ValueError("For the 'components' submethod in dimension reduction roi prediction at lest one 'embedding_nr' and a method ('cv', 'mcv', 'mgac', 'contours_low' or 'contours_high') must be provided.")

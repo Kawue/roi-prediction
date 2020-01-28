@@ -1,0 +1,3 @@
+ython .\main.py -r C:\Users\kwuellems\Desktop\msi-measure-compare-datasets\barley_101\barley101.h5 -s C:\Users\kwuellems\Github\roi_prediction\testresults\ -p mser -c mgac --fill_holes --mser --mser_method all --sequence_min 3 --delta 1 --min_area 0.05 --max_area 0.6 --drmethod umap --components 3 --embedding_nr -1 --save --save_pixels --save_plots --save_array
+
+python .\main.py -r C:\Users\kwuellems\Desktop\msi-measure-compare-datasets\barley_101\barley101.h5 -s C:\Users\kwuellems\Github\roi_prediction\testresults\ -p dr --fill_holes -c mgac --dimensionreduction --drpred component_pred --drmethod umap --components 5 --embedding_nr -1 --components_method mcv  --save --save_pixels --save_plots --save_array 

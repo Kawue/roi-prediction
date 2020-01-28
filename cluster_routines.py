@@ -1,16 +1,8 @@
+import sys
 import numpy as np
 import scipy as sp
 from sklearn.cluster import AgglomerativeClustering, KMeans
 from scipy.cluster.hierarchy import fclusterdata
-
-def add_cluster_subparser(parser):
-    subparser = parser.add_subparsers(title="Optional Procedures", dest="command")
-    cluster_parser = subparser.add_parser("clustering", help="arguments for pre defined clustering procedures.")
-    cluster_parser.add_argument("--cluster_method", required=True, choices=["AgglomerativeClustering", "kMeans"], help="Cluster method.")
-    cluster_parser.add_argument("--n_clusters", required=False, type=int, help="Number of Clusters.")
-    cluster_parser.add_argument("--save_clustering", default=None, required=False, type=str, help="Filename or path/filename to save a cluster result if a pre defined cluster method was used. Must contain .npy or .csv.")
-    cluster_parser.add_argument("--metric", required=False, help="Metric for distance computation (see scipy's pdist).")
-    cluster_parser.add_argument("--linkage", required=False, help="Linkage Method ('ward', 'complete', 'average', 'single') for AgglomerativeClustering(). 'ward' requires 'euclidean' as metric.")
 
 def cluster_routine(data, n_clusters, method):
     data = data.T
