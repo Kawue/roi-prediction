@@ -215,7 +215,11 @@ if "--mser" in argv:
 
 #hier fehlt noch, dass man auch drr embedding als images für mser oder mt haben kann
 if args.regionprediction != "dr":
-    if args.drmethod is not None:
+    try:
+        dr_flag = args.drmethod_mser
+    except:
+        dr_flag = args.drmethod_mt
+    if dr_flag is not None:
         drr = DimensionReductionRegions(data=dframe, dr_method=kwargs["dr_method"], components=kwargs["components"], embedding_nr=kwargs["embedding_nr"])
         images = [normalization(drr.embedding_images(i)) for i in kwargs["embedding_nr"]]
     else:

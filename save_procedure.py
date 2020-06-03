@@ -26,7 +26,7 @@ def save_procedure(results_dict, args, argv):
                 pixels = np.where(region_sum > 0)
                 for row, col in list(zip(*pixels)):
                     level = region_sum[row,col]
-                    writer.writerow({"row_pixel": row, "column_pixel": col, "level": level})
+                    writer.writerow({"level": level, "row_pixel": row, "column_pixel": col})
         if args.save_plots:
             plt.imsave(os.path.join(args.savepath, region_sum_str.format(filename, args.regionprediction, label, "png")), region_sum)
         if args.save_array:

@@ -119,8 +119,6 @@ class ROIpredictor:
             for i, region in enumerate(regions):
                 regions_dict[i] = region
             results_dict[idx] = {"region_sum": region_sum, "regions_dict": regions_dict}
-        print(results_dict)
-        print(results_dict.keys())
         return results_dict
 
 
