@@ -46,8 +46,8 @@ if "--dimensionreduction" in argv:
     parser.add_argument("--components", default=None, type=int, required="--dimensionreduction" in argv, help="Dimensionreduction: Number of components in list or single integer format.")
     parser.add_argument("--embedding_nr", default=None, type=int,  nargs="+", required="--dimensionreduction" in argv, help="Dimensionreduction: Number of components to use. -1 uses all components.")
     parser.add_argument("--components_method", default=None, type=str, required="component_pred" in argv, choices=["cv", "mcv", "mgac", "contours_low", "contours_high"], help="Dimensionreduction: Method for the dimension reduction components region prediction.")
-    parser.add_argument("--neighbors", default=None, type=int, required="knn" in argv, help="Dimensionreduction: Number of neighbors for the kNN graph. Zero will result in no impact.")
-    parser.add_argument("--radius", default=None, type=float, required="knn" in argv, help="Dimensionreduction: Radius for the rNN graph. Zero will result in no impact.")
+    parser.add_argument("--neighbors", default=None, type=int, required="knn_pred" in argv, help="Dimensionreduction: Number of neighbors for the kNN graph. Zero will result in no impact.")
+    parser.add_argument("--radius", default=None, type=float, required="knn_pred" in argv, help="Dimensionreduction: Radius for the rNN graph. Zero will result in no impact.")
     parser.add_argument("--expansion_factor", default=None, type=float, required=False, help="Dimensionreduction: Factor for the exponential increase of distances between data points in the calculated embedding.")
 
 if "--multithreshold" in argv:
