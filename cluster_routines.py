@@ -2,7 +2,7 @@ import sys
 import numpy as np
 import scipy as sp
 from sklearn.cluster import AgglomerativeClustering, KMeans
-from scipy.cluster.hierarchy import fclusterdata
+from scipy.cluster.hierarchy import fclusterdata, fcluster
 from scipy.spatial.distance import squareform
 
 def cluster_routine(data, n_clusters, method):
