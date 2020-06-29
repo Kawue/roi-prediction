@@ -21,10 +21,19 @@ def cluster_routine(data, n_clusters, method):
 #return fclusterdata(data, t=nr_clusters, criterion="maxclust", metric=metric, method=method) - 1
 def agglomerativeclustering(data, n_clusters, metric="cosine", linkage="average"):
     distance_matrix = squareform(sp.spatial.distance.pdist(data, metric=metric))
-    print(data.shape)
-    print(distance_matrix.shape)
-    clustering = AgglomerativeClustering(n_clusters=n_clusters, affinity="precomputed", linkage=linkage)
-    labels = clustering.fit_predict(distance_matrix)
+    if n_clusters > 1:
+        clustering = AgglomerativeClustering(n_clusters=n_clusters, affinity="precomputed", linkage=linkage)
+        labels = clustering.fit_predict(distance_matrix)
+    elif n_clusters == -1:
+        cond_dmatrix = squareform(distance_matrix)
+        Z = linkage(cond_dmatrix, method="average", optimal_ordering=True)
+        mean_dd = np.mean(Z[:,2])
+        std_dd = np.std(Z[:,2])
+        C = 1
+        labels = fcluster(Z, t=C*std_dd+mean_dd, criterion="distance")
+        labels = labels - 1
+    else:
+        raise ValueError("Choose n_clusters as -1 or greater than 1.")
     return labels
 
 
