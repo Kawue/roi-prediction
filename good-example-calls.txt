@@ -1,3 +1,65 @@
 ython .\main.py -r C:\Users\kwuellems\Desktop\msi-measure-compare-datasets\barley_101\barley101.h5 -s C:\Users\kwuellems\Github\roi_prediction\testresults\ -p mser -c mgac --fill_holes --mser --mser_method all --sequence_min 3 --delta 1 --min_area 0.05 --max_area 0.6 --drmethod umap --components 3 --embedding_nr -1 --save --save_pixels --save_plots --save_array
 
 python .\main.py -r C:\Users\kwuellems\Desktop\msi-measure-compare-datasets\barley_101\barley101.h5 -s C:\Users\kwuellems\Github\roi_prediction\testresults\ -p dr --fill_holes -c mgac --dimensionreduction --drpred component_pred --drmethod umap --components 5 --embedding_nr -1 --components_method mcv  --save --save_pixels --save_plots --save_array 
+
+
+
+--------------------------------------------------------------------------------------------------
+Jonas, 1 schon fast sehr gut, 2 gut, 3 so lala aber trotzdem ok 
+--------------------------------------------------------------------------------------------------
+3
+----------------------------
+python main.py -r Barley/barley101.h5 -s Barley/4 -p mser --fill_holes -c morphology --mser --mser_method all --sequence_min 3 --delta 1 --min_area 0.1 --max_area 0.4 --clustering --aggregation_mode mean --cluster_method kMeans --n_clusters 7 --metric correlation --linkage ward --save --save_pixels --save_plots --save_array
+
+python main.py -r Barley/barley101.h5 -s Barley/15 -p dr -c morphology --dimensionreduction --drpred component_pred --drmethod umap --components 2 --embedding_nr -1 --components_method mgac --clustering --aggregation_mode mean --cluster_method kMeans --n_clusters 7 --metric correlation --linkage ward --save --save_pixels --save_plots --save_array
+-----------------------------
+2
+-----------------------------
+python main.py -r Barley/barley101.h5 -s Barley/20 -p dr --dimensionreduction --drpred component_pred --drmethod umap --components 2 --embedding_nr -1 --components_method mcv --clustering --aggregation_mode min --cluster_method kMeans --n_clusters 7 --metric correlation --linkage ward --save --save_pixels --save_plots --save_array
+
+python main.py -r Barley/barley101.h5 -s Barley/24 -p mser --fill_holes --contour morphology --mser --mser_method all --sequence_min 3 --delta 1 --min_area 0.1 --max_area 0.5 --clustering --aggregation_mode mean --cluster_method kMeans --n_clusters 7 --metric correlation --linkage ward --save --save_pixels --save_plots --save_array
+
+python main.py -r Barley/barley101.h5 -s Barley/25 -p mser --fill_holes --contour morphology --mser --mser_method all --sequence_min 3 --delta 1 --min_area 0.1 --max_area 0.4 --clustering --aggregation_mode mean --cluster_method kMeans --n_clusters 7 --metric correlation --linkage ward --save --save_pixels --save_plots --save_array
+
+python main.py -r Barley/barley101.h5 -s Barley/27 -p mser --fill_holes --contour cv --mser --mser_method all --sequence_min 3 --delta 1 --min_area 0.1 --max_area 0.35 --clustering --aggregation_mode mean --cluster_method kMeans --n_clusters 7 --metric correlation --linkage ward --save --save_pixels --save_plots --save_array
+
+python main.py -r Barley/barley101.h5 -s Barley/30 -p mser --fill_holes --contour morphology --mser --mser_method all --sequence_min 3 --delta 1 --min_area 0.1 --max_area 0.4 --clustering --aggregation_mode mean --cluster_method kMeans --n_clusters 7 --metric correlation --linkage ward --save --save_pixels --save_plots --save_array
+
+python main.py -r Barley/barley101.h5 -s Barley/32 -p mser --fill_holes --contour morphology --mser --mser_method all --sequence_min 4 --delta 1 --min_area 0.1 --max_area 0.45 --clustering --aggregation_mode mean --cluster_method kMeans --n_clusters 7 --metric correlation --linkage ward --save --save_pixels --save_plots --save_array
+
+python main.py -r Barley/barley101.h5 -s Barley/39 -p mser --fill_holes --contour morphology --mser --mser_method all --sequence_min 6 --delta 1 --min_area 0.1 --max_area 0.4 --clustering --aggregation_mode mean --cluster_method kMeans --n_clusters 10 --linkage ward --save --save_pixels --save_plots --save_array
+
+python main.py -r Barley/barley101.h5 -s Barley/46 -p mser --fill_holes --contour mgac --mser --mser_method all --sequence_min 3 --delta 1 --min_area 0.1 --max_area 0.4 --clustering --aggregation_mode mean --cluster_method AgglomerativeClustering --n_clusters 7 --linkage ward --save --save_pixels --save_plots --save_array
+-----------------------
+1
+-----------------------
+python main.py -r Barley/barley101.h5 -s Barley/23 -p mt --multithreshold --nr_classes 3 --drmethod_mt umap --components_mt 3 --embedding_nr_mt -1 --clustering --aggregation_mode mean --cluster_method kMeans --n_clusters 7 --metric correlation --linkage ward --save --save_pixels --save_plots --save_array
+
+python main.py -r Barley/barley101.h5 -s Barley/29 -p mser --fill_holes --contour mcv --mser --mser_method all --sequence_min 3 --delta 1 --min_area 0.1 --max_area 0.4 --clustering --aggregation_mode mean --cluster_method kMeans --n_clusters 7 --metric correlation --linkage ward --save --save_pixels --save_plots --save_array
+
+python main.py -r Barley/barley101.h5 -s Barley/31 -p mser --fill_holes --contour morphology --mser --mser_method all --sequence_min 5 --delta 2 --min_area 0.1 --max_area 0.45 --clustering --aggregation_mode mean --cluster_method kMeans --n_clusters 7 --metric correlation --linkage ward --save --save_pixels --save_plots --save_array
+
+python main.py -r Barley/barley101.h5 -s Barley/36 -p mser --fill_holes --contour morphology --mser --mser_method all --sequence_min 3 --delta 1 --min_area 0.1 --max_area 0.49 --clustering --aggregation_mode mean --cluster_method kMeans --n_clusters 10 --linkage ward --save --save_pixels --save_plots --save_array
+
+python main.py -r Barley/barley101.h5 -s Barley/37 -p mser --fill_holes --contour morphology --mser --mser_method all --sequence_min 5 --delta 1 --min_area 0.1 --max_area 0.49 --clustering --aggregation_mode mean --cluster_method kMeans --n_clusters 10 --linkage ward --save --save_pixels --save_plots --save_array
+
+python main.py -r Barley/barley101.h5 -s Barley/40 -p mser --fill_holes --contour morphology --mser --mser_method all --sequence_min 6 --delta 1 --min_area 0.1 --max_area 0.4 --clustering --aggregation_mode mean --cluster_method AgglomerativeClustering --n_clusters 7 --linkage ward --save --save_pixels --save_plots --save_array
+
+python main.py -r Barley/barley101.h5 -s Barley/41 -p mser --fill_holes --contour morphology --mser --mser_method all --sequence_min 4 --delta 1 --min_area 0.1 --max_area 0.43 --clustering --aggregation_mode mean --cluster_method AgglomerativeClustering --n_clusters 7 --linkage ward --save --save_pixels --save_plots --save_array
+
+python main.py -r Barley/barley101.h5 -s Barley/42 -p mser --fill_holes --contour morphology --mser --mser_method all --sequence_min 5 --delta 1 --min_area 0.1 --max_area 0.4 --clustering --aggregation_mode mean --cluster_method AgglomerativeClustering --n_clusters 7 --linkage ward --save --save_pixels --save_plots --save_array
+
+python main.py -r Barley/barley101.h5 -s Barley/44 -p mser --fill_holes --contour mgac --mser --mser_method all --sequence_min 5 --delta 1 --min_area 0.1 --max_area 0.4 --clustering --aggregation_mode mean --cluster_method AgglomerativeClustering --n_clusters 7 --linkage ward --save --save_pixels --save_plots --save_array
+
+python main.py -r Barley/barley101.h5 -s Barley/45 -p mser --fill_holes --contour mgac --mser --mser_method all --sequence_min 4 --delta 1 --min_area 0.1 --max_area 0.4 --clustering --aggregation_mode mean --cluster_method AgglomerativeClustering --n_clusters 7 --linkage ward --save --save_pixels --save_plots --save_array
+-----------------------
+alles nur sehr subjektiv
+
+
+
+
+
+
+
+
+

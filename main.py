@@ -70,7 +70,7 @@ if "--mser" in argv:
 if "--clustering" in argv:
     parser.add_argument("--aggregation_mode", default=None, type=str, choices=['mean', 'median', 'sum', 'prod', 'max', 'min'], required="clustering" in argv, help="Clustering: Method to aggregate clustered image stacks. Choose from 'mean', 'median', 'sum', 'prod', 'max' or 'min'. Required for mt or mser.")
     parser.add_argument("--cluster_method", required="--clustering" in argv and "--load_clusterlabels" not in argv, choices=["AgglomerativeClustering", "kMeans"], help="Clustering: Cluster method.")
-    parser.add_argument("--n_clusters", required="--cluster_method" in argv, type=int, help="Clustering: Number of Clusters.")
+    parser.add_argument("--n_clusters", required="--cluster_method" in argv, type=int, help="Clustering: Number of Clusters. -1 for AC autonumber")
     parser.add_argument("--save_clustering", default=None, required=False, type=str, help="Clustering: Path + filename to save a cluster result if a pre defined cluster method was used. Must contain .npy or .csv.")
     parser.add_argument("--metric", required=False, help="Clustering: Metric for distance computation (see scipy's pdist).")
     parser.add_argument("--linkage", required=False, help="Clustering: Linkage Method ('ward', 'complete', 'average', 'single') for AgglomerativeClustering(). 'ward' requires 'euclidean' as metric.")
@@ -139,7 +139,7 @@ if "--dimensionreduction" in argv:
             kwargs["embedding_nr"] = list(range(args.components))
         else:
             kwargs["embedding_nr"] = args.embedding_nr
-    
+
     if args.components is not None:
         kwargs["components"] = args.components
 
@@ -163,7 +163,7 @@ if "--multithreshold" in argv:
         mt_classes = args.classes
     else:
         mt_classes = None
-        
+
     if mt_classes is not None:
         kwargs["thresholds"] = mt_classes
 
@@ -180,7 +180,7 @@ if "--multithreshold" in argv:
         kwargs["dr_method"] = args.drmethod_mt
 
 
-    
+
 
 
 if "--mser" in argv:
@@ -207,7 +207,7 @@ if "--mser" in argv:
             kwargs["embedding_nr"] = list(range(args.components_mser))
         else:
             kwargs["embedding_nr"] = args.embedding_nr_mser
-    
+
     if args.components_mser is not None:
         kwargs["components"] = args.components_mser
 
@@ -246,7 +246,7 @@ if args.regionprediction != "dr":
                     if args.delimiter:
                         delimiter = args.delimiter
                 cluster_labels = []
-                with open(args.clustering, "w") as csvfile: 
+                with open(args.clustering, "w") as csvfile:
                     if args.delimiter is None:
                         dialect = csv.Sniffer().sniff(csvfile.read())
                         csvfile.seek(0)
@@ -264,7 +264,7 @@ if args.regionprediction != "dr":
                     cluster_labels = cluster_labels[0]
 
             roi_pred.fit_clustering(memberships=cluster_labels, normalize=True)
-            
+
             if args.show_cluster_labels:
                 print("The selected Cluster method applied the following labels: " + str(roi_pred.memberships))
                 exit(0)
@@ -278,9 +278,9 @@ if args.regionprediction != "dr":
         else:
             raise ValueError("Choose one between a pre defined cluster method with --cluster_method or load a cluster method with --load_clusterlabels.")
     kwargs["images"] = images
-    
-    
-    
+
+
+
 
 
 
@@ -314,7 +314,7 @@ if "--save" in argv:
 
 
 
-    
+
 
 
 
