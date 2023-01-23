@@ -70,7 +70,7 @@ if "--mser" in argv:
 if "--clustering" in argv:
     parser.add_argument("--aggregation_mode", default=None, type=str, choices=['mean', 'median', 'sum', 'prod', 'max', 'min'], required="clustering" in argv, help="Clustering: Method to aggregate clustered image stacks. Choose from 'mean', 'median', 'sum', 'prod', 'max' or 'min'. Required for mt or mser.")
     parser.add_argument("--cluster_method", required="--clustering" in argv and "--load_clusterlabels" not in argv, choices=["AgglomerativeClustering", "kMeans"], help="Clustering: Cluster method.")
-    parser.add_argument("--n_clusters", required="--cluster_method" in argv, type=int, help="Clustering: Number of Clusters. -1 for AC autonumber")
+    parser.add_argument("--n_clusters", required="--cluster_method" in argv, type=int, help="Clustering: Number of Clusters. 9999 for AC autonumber")
     parser.add_argument("--save_clustering", default=None, required=False, type=str, help="Clustering: Path + filename to save a cluster result if a pre defined cluster method was used. Must contain .npy or .csv.")
     parser.add_argument("--metric", required=False, help="Clustering: Metric for distance computation (see scipy's pdist).")
     parser.add_argument("--linkage", required=False, help="Clustering: Linkage Method ('ward', 'complete', 'average', 'single') for AgglomerativeClustering(). 'ward' requires 'euclidean' as metric.")
@@ -226,7 +226,10 @@ if args.regionprediction != "dr":
         images = []
         if (args.load_clusterlabels is not None) ^ (args.cluster_method is not None):
             if args.cluster_method is not None:
+                if (args.n_clusters) == 9999:
+                    args.n_clusters = -1
                 cluster_labels = cluster_routine(dframe.values, args.n_clusters, args.cluster_method)
+                print(list(cluster_labels))
                 if args.save_clustering is not None:
                     if ".npy" in args.save_clustering:
                         np.save(args.save_clustering, cluster_labels)

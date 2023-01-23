@@ -3,6 +3,10 @@ import cv2
 import matplotlib.pyplot as plt
 import pandas as pd
 from skimage.measure import regionprops, label
+import skimage.filters as skif
+from skimage.exposure import equalize_adapthist
+from scipy.stats.mstats import winsorize
+from skimage import img_as_ubyte
 
 # Currently Restricted to uInt8 Values!
 
@@ -89,9 +93,10 @@ def calc_stability(bigger_region, current_region, smaller_region):
     return (bigger_region.sum() - smaller_region.sum()) / current_region.sum()
 
 
-def calc_mser(img, sequence_min, delta, min_area, max_area, all_maps=False):
+def calc_mser(img, sequence_min, delta, min_area, max_area, all_maps=False, binary_mask=None):
     img = img.copy()
-
+    #img = prepro(img, binary_mask)
+    #img = img_as_ubyte(img)
     #print("ATTENTION, depending on the background size, the max_area parameter should be chosen respectively small!")
     if img.dtype != np.uint8:
         raise ValueError("This method currently needs uint8 format!")
@@ -132,6 +137,18 @@ def calc_mser(img, sequence_min, delta, min_area, max_area, all_maps=False):
         print("")
         return np.zeros(img.shape), []
 
+
+
+def prepro(img, binary_mask):
+    binary_mask = binary_mask.astype(bool)
+    #p = np.percentile(img[binary_mask], 99)
+    #img[img > p] = p
+    #t = skif.threshold_otsu(img[binary_mask], nbins=256)
+    #img[img < t] = 0
+    img = skif.gaussian(img, sigma=0.8)
+    #img = equalize_adapthist(img)
+
+    return img
 
 
 '''

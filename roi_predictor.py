@@ -11,7 +11,7 @@ from maximally_stable_regions import calc_mser
 from multi_threshold_regions import calc_mt_regions
 
 from skimage import img_as_ubyte
-from mini_mser import calc_mser as cmser
+from mini_mser import calc_mser_cv as calc_mser_cv
 import os
 from skimage.morphology import binary_closing, square, disk, binary_opening
 
@@ -158,10 +158,11 @@ class ROIpredictor:
         for idx, img in enumerate(images):
             img = img_as_ubyte(img)
             # Prediction of rois based on Maximally Stable Extended Regions, REMEMBER: There ist still an extension, important?
-            region_sum, regions = calc_mser(img, sequence_min=sequence_min, delta=delta, min_area=min_area, max_area=max_area, all_maps=True)
+            region_sum, regions = calc_mser(img, sequence_min=sequence_min, delta=delta, min_area=min_area, max_area=max_area, all_maps=True, binary_mask=self.binary_image)
+            #region_sum, regions = calc_mser_cv(img, delta=delta, min_area=min_area, max_area=max_area, binary_mask=self.binary_image)
             regions_dict = {}
             if mser_method == "level":
-                for lvl in range(0, np.amax(region_sum)):
+                for lvl in range(0, int(np.amax(region_sum))):
                     img = self._create_empty_img(False)
                     img[np.where(region_sum > lvl)] = 1
                     regions_dict[lvl] = img

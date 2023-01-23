@@ -8,14 +8,14 @@ def calc_ac(img, method, init_img=None):
     if init_img is None:
         init_img = img
     if method == "cv":
-        region = chan_vese(img, mu=0.1, tol=0.0005, max_iter=5000, init_level_set=init_img)
+        region = chan_vese(img, mu=1, tol=0.05, max_iter=5000, init_level_set=init_img)
     elif method == "mcv":
-        region = morphological_chan_vese(img, iterations=1000, lambda1=1.0, lambda2=1.0, smoothing=1, init_level_set=init_img)
+        region = morphological_chan_vese(img, iterations=1000, lambda1=1.0, lambda2=1.0, smoothing=2, init_level_set=init_img)
     elif method == "ac":
         raise ValueError("Not implemented!")
     elif method == "mgac":
         gimg = inverse_gaussian_gradient(img)
-        region = morphological_geodesic_active_contour(gimg, iterations=1000, smoothing=1, balloon=0, init_level_set=img)
+        region = morphological_geodesic_active_contour(gimg, iterations=1000, smoothing=2, balloon=0, init_level_set=img)
     elif method == "contours_low":
         # For this method init_img needs to be the intensity image, while img is binary.
         lbl = label(img)
@@ -26,7 +26,7 @@ def calc_ac(img, method, init_img=None):
             contour_target = np.zeros_like(init_img)
             contour_target[prop.coords[:,0], prop.coords[:,1]] += init_img[prop.coords[:,0], prop.coords[:,1]]
             if prop.area > 4:
-                snake = find_contours(contour_target, level=1, fully_connected='low', positive_orientation='low')
+                snake = find_contours(contour_target, level=(np.amax(contour_target) - np.amin(contour_target)) / 2, fully_connected='low', positive_orientation='low')
                 snake_img = np.zeros_like(contour_target)
                 if len(snake) > 0:
                     max_snake_idx = np.argmax([len(x) for x in snake])
@@ -45,7 +45,7 @@ def calc_ac(img, method, init_img=None):
             contour_target = np.zeros_like(init_img)
             contour_target[prop.coords[:,0], prop.coords[:,1]] += init_img[prop.coords[:,0], prop.coords[:,1]]
             if prop.area > 4:
-                snake = find_contours(contour_target, level=1, fully_connected='low', positive_orientation='low')
+                snake = find_contours(contour_target, level=(np.amax(contour_target) - np.amin(contour_target)) / 2, fully_connected='high', positive_orientation='high')
                 snake_img = np.zeros_like(contour_target)
                 if len(snake) > 0:
                     max_snake_idx = np.argmax([len(x) for x in snake])
